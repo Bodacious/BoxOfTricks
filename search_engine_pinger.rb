@@ -5,7 +5,7 @@ class SearchEnginePinger < ActiveRecord::Observer
   require 'uri'
   
   # add the name of the model(s) we're observing here
-  observe ActiveRecord::Base.descendants.select { |m| m.try(:sep_observe_attributes) }.map(&:model_name).map(&:underscore)
+  observe :my_model
   
   # Base domains for search engines
   BASE_DOMAINS = {
@@ -14,6 +14,12 @@ class SearchEnginePinger < ActiveRecord::Observer
     :yahoo  => "search.yahooapis.com",
     :ask    => "submissions.ask.com"
   }
+  ASK_PATH    = "/ping?sitemap="
+  YAHOO_PATH  = "/SiteExplorerService/V1/updateNotification?url="
+  GOOGLE_PATH = "/webmasters/sitemaps/ping?sitemap="
+  BING_PATH   = "/webmaster/ping.aspx?siteMap="
+
+  
   
   class << self
     include Rails.application.routes.url_helpers
@@ -39,7 +45,7 @@ class SearchEnginePinger < ActiveRecord::Observer
   def ping_search_engines
     BASE_DOMAINS.each do |key,value|
       if Rails.env == "production"
-        response = Net::HTTP.get(value, send("#{key.to_s}_path") + self.class.escaped_sitemap_url)
+        response = Net::HTTP.get(value, const_get("#{key.to_s.upcase}_PATH") + self.class.escaped_sitemap_url)
         Rails.logger.info("[Search Engine Pinger]Pinged #{key.to_s} in #{Rails.env} mode")
         Rails.logger.info("[Search Engine Pinger]Response: #{response.inspect}")
       else
@@ -48,22 +54,4 @@ class SearchEnginePinger < ActiveRecord::Observer
     end    
   end
   
-
-  def ask_path
-    "/ping?sitemap="
-  end
-
-  # TODO: find the application name and stick it here!
-  def yahoo_path
-    "/SiteExplorerService/V1/updateNotification?appid=Gavinmorrice&url="
-  end
-
-  def google_path
-    "/webmasters/sitemaps/ping?sitemap="
-  end
-
-  def bing_path
-    "/webmaster/ping.aspx?siteMap="
-  end
-
 end

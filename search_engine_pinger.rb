@@ -7,6 +7,9 @@ class SearchEnginePinger < ActiveRecord::Observer
   # add the name of the model(s) we're observing here
   observe :my_model
   
+  # add your host here
+  APPLICATION_HOST = 'www.mydomain.com'
+  
   # Base domains for search engines
   BASE_DOMAINS = {
     :bing   => "www.bing.com",
@@ -14,6 +17,7 @@ class SearchEnginePinger < ActiveRecord::Observer
     :yahoo  => "search.yahooapis.com",
     :ask    => "submissions.ask.com"
   }
+  # Paths for sitemap pinging
   ASK_PATH    = "/ping?sitemap="
   YAHOO_PATH  = "/SiteExplorerService/V1/updateNotification?url="
   GOOGLE_PATH = "/webmasters/sitemaps/ping?sitemap="
@@ -25,22 +29,17 @@ class SearchEnginePinger < ActiveRecord::Observer
     include Rails.application.routes.url_helpers
     
     def escaped_sitemap_url
-      @escaped_sitemap_url ||= URI.escape(sitemap_url(:format => :xml, :host => APP_CONFIG[:host]))
+      @escaped_sitemap_url ||= URI.escape(sitemap_url(:format => :xml, :host => APPLICATION_HOST)
     end
     
   end
 
   def after_save(instance)
     @instance = instance
-    ping_search_engines if observed_attributes_changed?
+    ping_search_engines # if instance.changes[:attribute].any?
   end
   
-
   private
-  
-  def observed_attributes_changed?
-    !!@instance.class.sep_observe_attributes.detect { |att| @instance.changes[att] }
-  end
     
   def ping_search_engines
     BASE_DOMAINS.each do |key,value|

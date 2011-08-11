@@ -4,8 +4,10 @@ source "http://rubygems.org"
 gemspec
 
 group :test do
+  gem "rails", "3.0.9"
+  gem "sqlite3"
   gem "guard"
   gem "guard-rspec"
-  gem "guard-fsevent"
+  # gem "guard-fsevent"
   gem "rspec"
 end
